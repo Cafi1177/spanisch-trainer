@@ -85,6 +85,7 @@ input {
 
 input {
   margin-top: 14px;
+  font-size: 20px;
 }
 
 .task-card {
@@ -224,26 +225,12 @@ input {
   background: #2563eb;
 }
 
-.bottom-nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  justify-content: center;
-  gap: 28px;
-  padding: 14px 18px 18px;
-  background: rgba(255, 255, 255, 0.94);
-  border-top: 1px solid #e5e7eb;
-}
 
-.bottom-nav div:first-child {
-  color: #2563eb;
 }
 
 @media (max-width: 430px) {
   .app {
-    padding: 24px 14px 86px;
+    padding: 16px 12px 220px;
   }
 
   h1 {
@@ -285,7 +272,14 @@ input {
 
     <section class="card answer-card">
       <label class="label">Deine spanische Übersetzung ✏️</label>
-      <input id="antwort" placeholder="Schreibe hier deine Antwort...">
+     <input
+  id="antwort"
+  placeholder="Schreibe hier deine Antwort..."
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+  inputmode="text">
 
       <button class="button check-button" onclick="pruefen()">✓ Prüfen</button>
 
@@ -315,11 +309,6 @@ input {
 
 </main>
 
-<nav class="bottom-nav">
-  <div>🏠<br>Üben</div>
-  <div>📊<br>Statistik</div>
-  <div>⚙️<br>Einstellungen</div>
-</nav>
 
 <script>
 const supabaseUrl = "https://evbzpargptfdchixspkx.supabase.co";
