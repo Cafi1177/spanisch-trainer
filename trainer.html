@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spanisch-Trainer</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #dbeafe, #eff6ff);
+    margin: 0;
+    padding: 20px;
+    color: #1e3a8a;
+  }
+
+  .box {
+    max-width: 720px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 22px;
+    box-shadow: 0 10px 30px rgba(30, 64, 175, 0.15);
+    border: 1px solid #dbeafe;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #1d4ed8;
+    font-size: 32px;
+  }
+
+  select,
+  input,
+  button {
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    box-sizing: border-box;
+    border-radius: 12px;
+    margin-top: 12px;
+  }
+
+  select,
+  input {
+    border: 1px solid #bfdbfe;
+    background: #f8fbff;
+    color: #1e3a8a;
+  }
+
+  select:focus,
+  input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+
+  button {
+    border: none;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+  }
+
+  button:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-1px);
+  }
+
+  .deutsch {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 25px 0;
+    padding: 18px;
+    background: #eff6ff;
+    border-left: 6px solid #3b82f6;
+    border-radius: 14px;
+    color: #1e40af;
+  }
+
+  .ergebnis {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 14px;
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  .richtig {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+  }
+
+  .falsch {
+    background: #eff6ff;
+    color: #1e3a8a;
+    border: 1px solid #bfdbfe;
+  }
+
+  .loesung {
+    margin-top: 12px;
+    font-weight: bold;
+    color: #1d4ed8;
+  }
+</style>
+    </head>
+<body>
+  <div class="box">
+    <h1>Spanisch-Trainer</h1>
+
+    <select id="kapitelSelect" onchange="kapitelLaden()">
+      <option>Lade Kapitel...</option>
+    </select>
+
+    <div>Übersetze ins Spanische:</div>
+    <div class="deutsch" id="deutsch">Lade...</div>
+
+    <input id="antwort" placeholder="Deine spanische Übersetzung">
+
+    <button onclick="pruefen()">Prüfen</button>
+    <button onclick="naechsteAufgabe()">Nächste Aufgabe</button>
+
+    <div id="ergebnis"></div>
+  </div>
+
+  <script>
+    const supabaseUrl = "https://evbzpargptfdchixspkx.supabase.co";
+    const supabaseKey = "sb_publishable_KdQ0BVd76hGX-Zw8El3iag_0Mobqt2N";
+
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+    let aufgaben = [];
+    let aktuelleAufgabe = 0;
+
+    function normalisieren(text) {
+      return text
+        .toLowerCase()
+        .trim()
+        .replace(/[.!?¿¡]/g, "");
+    }
+
+    function anzeigen() {
+      if (aufgaben.length === 0) {
+        document.getElementById("deutsch").innerText = "Keine Aufgaben gefunden.";
+        return;
+      }
+
+      document.getElementById("deutsch").innerText = aufgaben[aktuelleAufgabe].deutsch;
+      document.getElementById("antwort").value = "";
+      document.getElementById("ergebnis").innerHTML = "";
+    }
+
+    function pruefen() {
+      const eingabe = document.getElementById("antwort").value;
+      const richtig = aufgaben[aktuelleAufgabe].spanisch;
+
+      const eingabeNormal = normalisieren(eingabe);
+      const richtigNormal = normalisieren(richtig);
+
+      const ergebnis = document.getElementById("ergebnis");
+
+      if (eingabeNormal === richtigNormal) {
+        ergebnis.className = "ergebnis richtig";
+        ergebnis.innerHTML = "Richtig!";
+      } else {
+        ergebnis.className = "ergebnis falsch";
+        ergebnis.innerHTML =
+          "Noch nicht ganz richtig." +
+          "<div class='loesung'>Richtige Lösung:<br>" + richtig + "</div>" +
+          "<div>Deine Antwort:<br>" + eingabe + "</div>";
+      }
+    }
+
+    function naechsteAufgabe() {
+      aktuelleAufgabe++;
+
+      if (aktuelleAufgabe >= aufgaben.length) {
+        aktuelleAufgabe = 0;
+      }
+
+      anzeigen();
+    }
+
+    async function kapitelLaden() {
+      const kapitel = document.getElementById("kapitelSelect").value;
+
+      const { data, error } = await supabaseClient
+        .from("Vokabeln")
+        .select("*")
+        .eq("kapitel", kapitel)
+        .eq("aktiv", true);
+
+      if (error) {
+        document.getElementById("deutsch").innerText = "Fehler beim Laden.";
+        return;
+      }
+
+      aufgaben = data;
+      aktuelleAufgabe = 0;
+      anzeigen();
+    }
+
+    async function kapitelListeLaden() {
+      const { data, error } = await supabaseClient
+        .from("Vokabeln")
+        .select("kapitel")
+        .eq("aktiv", true);
+
+      if (error) {
+        document.getElementById("kapitelSelect").innerHTML =
+          "<option>Fehler beim Laden</option>";
+        return;
+      }
+
+      const kapitelEinzigartig = [...new Set(data.map(eintrag => eintrag.kapitel))];
+
+      const select = document.getElementById("kapitelSelect");
+      select.innerHTML = "";
+
+      kapitelEinzigartig.forEach(kapitel => {
+        const option = document.createElement("option");
+        option.value = kapitel;
+        option.textContent = kapitel;
+        select.appendChild(option);
+      });
+
+      kapitelLaden();
+    }
+
+    kapitelListeLaden();
+  </script>
+</body>
+</html>
